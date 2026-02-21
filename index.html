@@ -1,11 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>액체 시뮬레이션</title>
-</head>
-<body>
-    <h1>Hello world</h1>
-</body>
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>액체 따르기 시뮬레이터</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header><span>LIQUID SIMULATOR</span></header>
+
+    <div class="page-container">
+      <div class="side-panel"></div>
+
+      <div id="mainArea">
+        <!-- ==================== 컨트롤 버튼 영역 ==================== -->
+        <div class="controls">
+          <!-- 액체 변경 버튼 + 드롭다운 -->
+          <div class="dropdown-wrapper">
+            <button class="btn btn-change" id="changeBtn">액체 변경</button>
+            <div class="dropdown hidden" id="dropdown">
+              <!-- data-liquid: 액체 종류 키 -->
+              <button class="dropdown-item selected" data-liquid="water">
+                물
+              </button>
+              <button class="dropdown-item" data-liquid="milk">우유</button>
+              <button class="dropdown-item" data-liquid="juice">
+                오렌지 주스
+              </button>
+              <button class="dropdown-item" data-liquid="cola">콜라</button>
+              <button class="dropdown-item" data-liquid="beer">맥주</button>
+            </div>
+          </div>
+          <!-- 초기화 버튼: 처음 상태(액체를 따르기 전)로 되돌아감 -->
+          <button class="btn btn-reset" id="resetBtn">초기화</button>
+        </div>
+
+        <!-- ==================== 따르기 스트림 캔버스 ==================== -->
+        <canvas id="pourCanvas"></canvas>
+
+        <!-- ==================== 컵 SVG 요소 ==================== -->
+        <!-- 액체 받을 컵 (왼쪽 고정, 빈 컵) -->
+        <div class="cup-wrapper" id="receivingCup">
+          <div class="level-badge" id="receivingLevel">0%</div>
+          <svg
+            class="cup-svg"
+            id="receivingSvg"
+            viewBox="0 0 100 130"
+            preserveAspectRatio="none"
+          ></svg>
+        </div>
+
+        <!-- 움직일 컵 (오른쪽, 드래그 또는 기울기로 조작) -->
+        <div class="cup-wrapper movable" id="movingCup">
+          <div class="level-badge" id="movingLevel">80%</div>
+          <svg
+            class="cup-svg"
+            id="movingSvg"
+            viewBox="0 0 100 130"
+            preserveAspectRatio="none"
+          ></svg>
+        </div>
+
+        <!-- 안내 문구 -->
+        <div id="guideText">데스크탑: 오른쪽 컵을 오른쪽으로 드래그 하세요</div>
+        <div id="pourMsg">🫗 따르는 중...</div>
+      </div>
+
+      <div class="side-panel"></div>
+    </div>
+
+    <footer></footer>
+
+    <script src="main.js"></script>
+  </body>
 </html>
