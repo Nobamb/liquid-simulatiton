@@ -444,30 +444,65 @@ document.addEventListener('touchend', () => {
 
 // ===== 기기 기울기 (태블릿/모바일 자이로스코프) =====
 function setupDeviceOrientation() {
-  if (typeof DeviceOrientationEvent === 'undefined') return;
+  // 브라우저가 기울기 센서를 지원하는지 확인
+  if (typeof DeviceOrientationEvent === 'undefined') {
+    console.warn('기기 기울기 센서를 지원하지 않는 환경입니다.');
+    return;
+  }
 
   const handler = e => {
-    if (state.isDragging) return;
-    const gamma = e.gamma || 0;
-    // 💡 수정: 왼쪽 기울기는 음수. 왼쪽으로 5도 이상 기울였을 때 동작하도록 변경
-    if (gamma < -5) { 
-      state.cupRotation = Math.max(0, Math.min(MAX_ROTATION, (-gamma - 5) * 1.5));
+    if (state.isDragging) return; // 터치로 드래그 중일 때는 기울기 무시
+
+    let tilt = 0;
+    // 현재 화면이 가로인지 세로인지 방향 감지
+    const orientation = (screen.orientation || {}).type || window.orientation || 0;
+
+    // 기기 방향에 따라 좌우 기울기를 담당하는 센서 축(beta, gamma) 동적 할당
+    if (orientation === 90 || orientation === 'landscape-primary') {
+      // 기기를 가로로 눕혔을 때 (홈버튼이 오른쪽)
+      tilt = e.beta || 0; 
+    } else if (orientation === -90 || orientation === 'landscape-secondary') {
+      // 기기를 가로로 눕혔을 때 (홈버튼이 왼쪽)
+      tilt = -(e.beta || 0);
     } else {
+      // 기기를 세로로 들었을 때 (기본 Portrait 모드)
+      tilt = e.gamma || 0; 
+    }
+
+    // 💡 왼쪽으로 기울이면 tilt 값이 음수가 됨 (-5도 이상 기울였을 때부터 동작)
+    if (tilt < -5) {
+      // 왼쪽 기울기 값을 양수로 변환(-tilt)하여 컵 회전 각도에 적용
+      state.cupRotation = Math.max(0, Math.min(MAX_ROTATION, (-tilt - 5) * 1.5));
+    } else {
+      // 기기를 다시 똑바로 세우면 컵이 원래대로 돌아오게 함
       state.cupRotation = Math.max(0, state.cupRotation - 2);
     }
+    
     applyRotation();
     state.gyroEnabled = true;
   };
 
+  // iOS 13+ 및 최근 브라우저를 위한 센서 권한 요청 로직
   if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    document.addEventListener('touchstart', function reqPerm() {
+    // 사용자가 처음 화면을 터치할 때 권한 요청 창을 띄움
+    const requestGyro = () => {
       DeviceOrientationEvent.requestPermission()
         .then(res => {
-          if (res === 'granted') window.addEventListener('deviceorientation', handler);
-        }).catch(() => {});
-      document.removeEventListener('touchstart', reqPerm);
-    }, { once: true });
+          if (res === 'granted') {
+            window.addEventListener('deviceorientation', handler);
+          }
+        }).catch(err => console.error('기울기 센서 권한 오류:', err));
+        
+      // 한 번 권한을 요청하고 나면 리스너 제거
+      document.removeEventListener('touchstart', requestGyro);
+      document.removeEventListener('click', requestGyro);
+    };
+
+    // 터치나 클릭 이벤트에 권한 요청 함수 연결
+    document.addEventListener('touchstart', requestGyro, { once: true });
+    document.addEventListener('click', requestGyro, { once: true });
   } else {
+    // 안드로이드 등 권한 요청이 따로 필요 없는 기기는 바로 이벤트 등록
     window.addEventListener('deviceorientation', handler);
   }
 }
